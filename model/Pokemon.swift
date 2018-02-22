@@ -2,7 +2,7 @@
 //  pokemon.swift
 //  Pokedex
 //
-//  Created by MCS Devices on 2/20/18.
+//  Created on 2/20/18.
 //  Copyright © 2018 angel. All rights reserved.
 //
 
@@ -13,8 +13,9 @@ struct Pokemon: Decodable{
     var name:String
     var height:Int
     var weight:Int
-    var types:String
-    var sprites:[String:String]
+    var sprites:[String:String?]
+    var types:[Type]
+    
     
 }
 
