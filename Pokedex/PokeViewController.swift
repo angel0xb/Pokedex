@@ -17,34 +17,41 @@ class PokeViewController: UIViewController {
     @IBOutlet weak var heightLabel: UILabel!
     @IBOutlet weak var type1Label: UILabel!
     @IBOutlet weak var type2Label: UILabel!
+    @IBOutlet weak var flavorTextView: UITextView!
     
     var pokemon:Pokemon?
+    var image:UIImage?
     override func viewDidLoad() {
         super.viewDidLoad()
         
         if let poke = pokemon{
-            idLabel.text = "\(poke.id)"
+            idLabel.text = "No. \(poke.id)"
             nameLabel.text = poke.name
-            weightLabel.text = "\(poke.weight)"
-            heightLabel.text = "\(poke.height)"
+            weightLabel.text = "Weight:\(poke.weight)lbs"
+            heightLabel.text = "Height:\(poke.height)ft"
             type1Label.text = poke.types[0].type["name"]
             
             if poke.types.count > 1{
                 if let type2 = poke.types[1].type["name"]{
                     type2Label.text = type2
                 }
+            } else {
+                type2Label.text = ""
             }
 
-            
-            DispatchQueue.main.async {
-                guard let imageURL = poke.sprites["front_default"] as! String! else{return}
-                guard let url = URL(string:imageURL) else{return}
-                if let data = try? Data(contentsOf: url){
-                    if let image: UIImage = UIImage(data: data){
-                        self.pokeImage.image = image
+            if let species = poke.pokeSpecies{
+                var enText = String()
+                for flavorText in species.flavor_text_entries{
+                    if flavorText.language.name == "en"{
+                        enText = flavorText.flavor_text
                     }
                 }
+                print(enText)
+                flavorTextView.text = enText
             }
+            
+            pokeImage.image = image
+            
         }
         
     }

@@ -7,7 +7,7 @@
 //
 
 import Foundation
-struct PokeResultModel:Decodable {
+struct PokeResultModel:Codable {
     var url:String
     var name:String
 }

@@ -8,66 +8,13 @@
 
 import Foundation
 
-final class NetworkManager{
+final class NetworkManager: NetworkManagerService{
     weak var delegate:NetworkManagerDelegate?
+    var pokemons:[Pokemon]? //used to store sorted [Pokemon]
     
-    
-//    func downloadPokemon(urlString: String){
-//
-//        guard let url = URL(string:urlString) else{
-//            return
-//        }
-//
-//
-//        URLSession.shared.dataTask(with: url) { (data, response, err) in
-//            guard let data = data else{return}
-//
-//            guard let json = (try? JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.mutableContainers)) as? [String: Any] else{return}
-//
-////            print(json)
-//            let results = json["results"] as! [Any]
-//
-//            DispatchQueue.main.async {
-//            var pokeURLS = [String]()
-//            for pokeInfo in results{
-//                let pokeInfoDict = pokeInfo as! [String:Any]
-//                let pokeURL = pokeInfoDict["url"] as! String
-//                pokeURLS.append(pokeURL)
-//            }
-//
-//
-//                do{
-//                    var pokemons = [Pokemon]()
-//
-//                    self.getPokemon(urls: pokeURLS, completionHandler: ({(result:[Pokemon]) in
-//
-//                        pokemons = result.sorted {($0.id) < ($1.id)}
-//                        for poke in pokemons{
-//                            self.delegate?.didDownloadPokemon(poke: poke)
-//                        }
-//
-//
-//                    }))
-//
-//
-//                } catch let jsonErr{
-//                    print("Error serializing json:", jsonErr)
-//                }
-//            }
-//
-//            }.resume()
-//    }
-    
-    
-    func downloadPokemon(urlString: String){
-        
-        guard let url = URL(string:urlString) else{
-            return
-        }
-        
-        
-        URLSession.shared.dataTask(with: url) { (data, response, err) in
-            guard let data = data else{return}
+    func downloadPokemon(url: String ) {
+
+        getRequest(urlString:url , completion: ({(data:Data) in
             
             do{
                 let search = try JSONDecoder().decode(Search.self, from: data)
@@ -75,70 +22,119 @@ final class NetworkManager{
                 
                 var pokeURLs = [String]()
                 
-                for pokeInfo in results{
+                for pokeInfo in results {
                     let pokeURL = pokeInfo.url
                     pokeURLs.append(pokeURL)
                 }
                 
-                var pokemons = [Pokemon]()
                 
-                self.getPokemon(urls: pokeURLs, completionHandler: ({(result:[Pokemon]) in
+                DispatchQueue.main.async {
                     
-//                    pokemons = result.sorted {($0.id) < ($1.id)}
-//                    for poke in pokemons{
-//                        self.delegate?.didDownloadPokemon(poke: poke)
-//                    }
-                    
-                }))
+                    self.getPokemons(urls: pokeURLs, completion: ({ (pokeResults) in
+                        print("retrieving pokemon")
+                        let pokeResultsSorted = pokeResults.sorted(by: {($0.id < ($1.id))})
+
+                        self.pokemons = pokeResultsSorted
+
+                        self.delegate?.didDownloadRequest()
+                    }))
+          
+                }
                 
-            }catch let jsonErr{
+            } catch let jsonErr {
                 print("Error serializing json:", jsonErr)
             }
             
-        }.resume()
+        }))
     }
     
     
-    func getPokemon(urls:[String], completionHandler: @escaping ([Pokemon]) ->Void) {
+    func getPokemon(url:String, completion: @escaping (Pokemon) -> Void) {
+        let group = DispatchGroup()
+        
+        getRequest(urlString: url, completion: ({ (data:Data) in
+            do {
+                
+                var pokemon = try JSONDecoder().decode(Pokemon.self, from: data)
+                group.enter()
+                self.getSpecies(request: pokemon.species.url, completion: { (pSpecies) in
+                    print("setting species")
+                    pokemon.pokeSpecies = pSpecies
+                    group.leave()
+                    
+                })
+                
+                group.notify(queue: .main, execute: {
+                    completion(pokemon)
 
-        var pokemons = [Pokemon]()
-        for url in urls{
-            guard let url = URL(string:url) else{return}
+                    })
+    
+            } catch let jsonError {
+
+                print("Error serializing json:", jsonError)
+            }
+
+        }))
+        
+    }
+    
+    
+    func getPokemons(urls: [String], completion: @escaping (([Pokemon]) -> Void)) {
+        let group = DispatchGroup()
+        var pokes = [Pokemon]()
+        for url in urls {
+            group.enter()
+            getPokemon(url: url, completion: { (pokemon) in
+                pokes.append(pokemon)
+                group.leave()
+            })
             
-            URLSession.shared.dataTask(with: url) { (data, response, err) in
-                guard let data = data else{return}
-                
-                DispatchQueue.main.async {
-                    do{
-                        
-                        
-                        let poke = try JSONDecoder().decode(Pokemon.self, from: data)
-                        
-                        
-                        pokemons.append(poke)
-//                        pokemons = pokemons.sorted {($0.id) < ($1.id)}
-//                        
-//                        for poke in pokemons{
-//                            self.delegate?.didDownloadPokemon(poke: poke)
-//                        }
-                        if pokemons.count == urls.count{
-                            pokemons = pokemons.sorted {($0.id) < ($1.id)}
-                            for poke in pokemons{
-                                self.delegate?.didDownloadPokemon(poke: poke)
-                            }
-
-                            completionHandler(pokemons)
-                        }
-                        
-                        
-                    } catch let jsonErr{
-                        print("Error serializing json:", jsonErr)
-                    }
-                }
- 
-                
-                }.resume()
         }
-
+        group.notify(queue: .main) {
+            
+            completion(pokes)
+        }
+        
     }
+    
+    
+
+
+//    makes network request and parses it 
+    func getSpecies(request:String, completion: @escaping (PokemonSpecies) -> Void) {
+
+        getRequest(urlString: request, completion: { (data) in
+            do {
+                let specie = try JSONDecoder().decode(PokemonSpecies.self, from: data)
+                completion(specie)
+                
+            } catch let jsonErr {
+                print("Error serializing json:", jsonErr)
+            }
+            
+        })
+        
+    }
+    
+    func getRequstModel<T:Decodable>(urlRequest: String, completion: @escaping
+        ((T) -> Void)) {
+        getRequest(urlString: urlRequest, completion:  { (data) in
+            do{
+                let model = try JSONDecoder().decode(T.self, from: data)
+                
+                completion(model)
+            } catch let jsonError {
+                print("Error serializing json:", jsonError)
+            }
+        })
+    }
+    
 }
+
+
+
+
+
+
+
+

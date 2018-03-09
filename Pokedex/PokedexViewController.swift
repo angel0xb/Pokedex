@@ -15,19 +15,10 @@ class PokedexViewController: UIViewController {
     @IBOutlet weak var pokedexCollectionView: UICollectionView!
     var myPokeArray = [Pokemon]()
     var offset = 20
-    let myNetworkManager = NetworkManager()
+    var myNetworkManager: NetworkManager?
+    var pokey: Pokemon?
     
     @IBAction func nextPage(_ sender: Any) {
-        
-        
-        print(offset)
-        print(myPokeArray.count)
-//        myNetworkManager.delegate = self
-        myNetworkManager.downloadPokemon(urlString:"https://pokeapi.co/api/v2/pokemon/?limit=1&offset=\(offset)")
-        offset += 1
-        DispatchQueue.main.async {
-            self.pokedexCollectionView.reloadData()
-        }
         
     }
     
@@ -37,9 +28,27 @@ class PokedexViewController: UIViewController {
         let nib = UINib(nibName: PokeCollectionViewCell.nibName, bundle: nil)
         pokedexCollectionView.register(nib, forCellWithReuseIdentifier: PokeCollectionViewCell.nibName)
         
+        myNetworkManager = NetworkManager()
+        myNetworkManager?.delegate = self
+        myNetworkManager?.downloadPokemon(url:"https://pokeapi.co/api/v2/pokemon/")
         
-        myNetworkManager.delegate = self
-        myNetworkManager.downloadPokemon(urlString:"https://pokeapi.co/api/v2/pokemon/")
+//        DispatchQueue.main.async {
+//            self.myNetworkManager?.getPokemon(url: "https://pokeapi.co/api/v2/pokemon/1/", completion: { (poke) in
+//                self.myPokeArray.append(poke)
+//                self.pokey = poke
+//                print(self.pokey)
+//            })
+//
+//        }
+
+        
+        
+        
+        if let pokes = myNetworkManager?.pokemons{
+            myPokeArray = pokes
+            print("\n\n\n \(myPokeArray)")
+        }
+        pokedexCollectionView.reloadData()
         
     }
 
@@ -53,49 +62,67 @@ class PokedexViewController: UIViewController {
     // MARK: - Navigation
 
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "showPokemon"{
-            if let pokeVC = segue.destination as? PokeViewController, let indexPath = pokedexCollectionView.indexPathsForSelectedItems?.first{
+        
+        if let pokeVC = segue.destination as? PokeViewController, let indexPath = pokedexCollectionView.indexPathsForSelectedItems?.first {
+            
+            if let cell = pokedexCollectionView.cellForItem(at: indexPath) as? PokeCollectionViewCell {
                 
-                let poke = myPokeArray[indexPath.row]
-                pokeVC.pokemon = poke
+//                if let image = cell.pokeImage{
+//                    pokeVC.image = image.image
+//                }
+                
+                
+                pokeVC.image = cell.pokeImage.image
+                pokeVC.pokemon = cell.poke
+                
+                
+//                if let pokes = myNetworkManager?.pokemons {
+//                    let pokemon = pokes[indexPath.row]
+//                    pokeVC.pokemon = pokemon
+//                    guard let sprite = pokemon.sprites["front_default"] else{return}
+//                    if let sprite = sprite{
+//                        if let image = imageCache.object(forKey: sprite as AnyObject) {
+//                             pokeVC.image = image as? UIImage
+//                        }
+//                    }
+//                }
+                
                 
             }
-                
         }
     }
-        
-    
 }
 
 extension PokedexViewController: NetworkManagerDelegate{
-    func didDownloadPokemon(poke: Pokemon) {
-
-        myPokeArray.append(poke)
-
-        DispatchQueue.main.async{
+    func didDownloadRequest() {
+        DispatchQueue.main.async {
             self.pokedexCollectionView.reloadData()
         }
     }
-    
-    
 }
 
-extension PokedexViewController: UICollectionViewDataSource{
+extension PokedexViewController: UICollectionViewDataSource {
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return myPokeArray.count
+        if let pokes = myNetworkManager?.pokemons{
+            return pokes.count
+        }
+        return 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = pokedexCollectionView.dequeueReusableCell(withReuseIdentifier: PokeCollectionViewCell.nibName, for: indexPath) as! PokeCollectionViewCell
-        let pokemon = myPokeArray[indexPath.row]
+        if let cell = pokedexCollectionView.dequeueReusableCell(withReuseIdentifier: PokeCollectionViewCell.nibName, for: indexPath) as? PokeCollectionViewCell, let pokemon = myNetworkManager?.pokemons![indexPath.row] {
+            cell.populateCell(pokemon: pokemon)
+            
+            return cell
+        }
         
-        cell.populateCell(pokemon: pokemon)
-        
-        return cell
+        return UICollectionViewCell()
     }
 }
 
-extension PokedexViewController: UICollectionViewDelegate{
+extension PokedexViewController: UICollectionViewDelegate {
+    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         performSegue(withIdentifier: "showPokemon", sender: self)
     }

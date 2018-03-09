@@ -7,7 +7,7 @@
 //
 
 import Foundation
-struct Type:Decodable {
+struct Type:Codable {
     var slot:Int
     var type:[String:String]
    

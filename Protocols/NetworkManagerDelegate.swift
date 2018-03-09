@@ -9,5 +9,5 @@
 import Foundation
 
 protocol NetworkManagerDelegate:class {
-    func didDownloadPokemon(poke:Pokemon)
+    func didDownloadRequest() -> Void
 }

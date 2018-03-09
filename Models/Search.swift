@@ -7,9 +7,9 @@
 //
 
 import Foundation
-struct Search:Decodable {
-//    var count:Int
+struct Search:Codable {
+    var count:Int
     var previous:String?
-    var results:[PokeResultModel]
+    var results:[Name]
     var next:String?
 }
