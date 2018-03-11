@@ -52,4 +52,8 @@ class PokeCollectionViewCell: UICollectionViewCell {
             })
         }
     }
+    
+
+    
+//    func populateCellWithEntity(poke)
 }

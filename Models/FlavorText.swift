@@ -8,6 +8,11 @@
 
 import Foundation
 struct FlavorText: Codable{
-    var flavor_text:String
+    var flavorText:String
     var language:Name
+    
+    enum CodingKeys : String, CodingKey {
+        case language
+        case flavorText = "flavor_text"
+    }
 }

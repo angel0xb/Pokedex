@@ -10,5 +10,11 @@ import Foundation
 struct PokemonSpecies:Codable {
     var id:Int
     var name:String
-    var flavor_text_entries:[FlavorText]
+    var flavorTextEntries:[FlavorText]
+    
+    enum CodingKeys : String, CodingKey {
+        case id
+        case name
+        case flavorTextEntries = "flavor_text_entries"
+    }
 }

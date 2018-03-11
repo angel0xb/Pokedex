@@ -14,9 +14,16 @@ class PokedexViewController: UIViewController {
 
     @IBOutlet weak var pokedexCollectionView: UICollectionView!//view used to display Pokemon
     var myNetworkManager: NetworkManager?//Network Manager used to make requests
+    var myDataManager = DataPersitanceManager()
     
     @IBAction func nextPage(_ sender: Any) {
         
+        guard let pokemons = myNetworkManager?.pokemons else {
+            return
+        }
+        for pokemon in pokemons {
+            myDataManager.storePokemon(pokemonInstance: pokemon)
+        }
     }
     
     override func viewDidLoad() {
@@ -28,9 +35,6 @@ class PokedexViewController: UIViewController {
         myNetworkManager = NetworkManager()//initialize NetowrkManager
         myNetworkManager?.delegate = self//set Deleagte
         myNetworkManager?.downloadPokemon(url:"https://pokeapi.co/api/v2/pokemon/")//make Request using URL
-        
-        
-//        pokedexCollectionView.reloadData()
         
     }
 

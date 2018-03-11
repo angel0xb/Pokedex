@@ -12,6 +12,14 @@ final class NetworkManager: NetworkManagerService{
     weak var delegate:NetworkManagerDelegate?
     var pokemons:[Pokemon]? //used to store sorted [Pokemon]
     
+    /*
+     Makes request with a search result array of muiltiple Pokemon urls
+     Append each URL into an array
+     pass array to getPokemons call
+     sort results bases on ID
+     set pokemon using sorted array
+     call delegate to reload collectionview
+     */
     func downloadPokemon(url: String ) {
         getRequest(urlString:url , completion: ({(data:Data) in
             
@@ -30,12 +38,12 @@ final class NetworkManager: NetworkManagerService{
                 DispatchQueue.main.async {
                     
                     self.getPokemons(urls: pokeURLs, completion: ({ (pokeResults) in
-                        print("retrieving pokemon")
+//                        print("retrieving pokemon")
                         let pokeResultsSorted = pokeResults.sorted(by: {($0.id < ($1.id))})
 
                         self.pokemons = pokeResultsSorted
 
-                        self.delegate?.didDownloadRequest()
+//                        self.delegate?.didDownloadRequest()
                     }))
           
                 }
@@ -48,36 +56,13 @@ final class NetworkManager: NetworkManagerService{
     }
     
     
-    func getPokemon(url:String, completion: @escaping (Pokemon) -> Void) {
-        let group = DispatchGroup()
-        
-        getRequest(urlString: url, completion: ({ (data:Data) in
-            do {
-                
-                var pokemon = try JSONDecoder().decode(Pokemon.self, from: data)
-                group.enter()
-                self.getSpecies(request: pokemon.species.url, completion: { (pSpecies) in
-                    print("setting species")
-                    pokemon.pokeSpecies = pSpecies
-                    group.leave()
-                    
-                })
-                
-                group.notify(queue: .main, execute: {
-                    completion(pokemon)
-
-                    })
     
-            } catch let jsonError {
-
-                print("Error serializing json:", jsonError)
-            }
-
-        }))
-        
-    }
-    
-    
+    /*
+     make network request for each url string in array passed
+     closure captures an array of Pokemon from URL
+     Dispatch Group used to synchronize calls
+     completion onces all Pokemon objects are added to array
+     */
     func getPokemons(urls: [String], completion: @escaping (([Pokemon]) -> Void)) {
         let group = DispatchGroup()
         var pokes = [Pokemon]()
@@ -97,9 +82,48 @@ final class NetworkManager: NetworkManagerService{
     }
     
     
+    
+    /*
+     Makes netowork request
+     parses data into Pokemon object using JSONDecoder
+     Dispatch Group used to synchronize network calls to populate object
+     Waits for species to be set before escaping
+     
+     */
+    func getPokemon(url:String, completion: @escaping (Pokemon) -> Void) {
+        let group = DispatchGroup()
+        
+        getRequest(urlString: url, completion: ({ (data:Data) in
+            do {
+                
+                var pokemon = try JSONDecoder().decode(Pokemon.self, from: data)
+                group.enter()
+                self.getSpecies(request: pokemon.species.url, completion: { (pSpecies) in
+//                    print("setting species")
+                    pokemon.pokeSpecies = pSpecies
+                    group.leave()
+                    
+                })
+                
+                group.notify(queue: .main, execute: {
+                    
+                    completion(pokemon)
+                    self.delegate?.didDownloadRequest()
+                    })
+    
+            } catch let jsonError {
 
+                print("Error serializing json:", jsonError)
+            }
 
-//    makes network request and parses it into a PokemonSpecies using JSONDecoder
+        }))
+        
+    }
+    
+
+    
+
+    //    makes network request and parses it into a PokemonSpecies using JSONDecoder
     func getSpecies(request:String, completion: @escaping (PokemonSpecies) -> Void) {
 
         getRequest(urlString: request, completion: { (data) in
