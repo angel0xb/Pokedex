@@ -21,6 +21,7 @@ class PokeViewController: UIViewController {
     
     var pokemon:Pokemon?
     var image:UIImage?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -39,19 +40,20 @@ class PokeViewController: UIViewController {
                 type2Label.text = ""
             }
 
+            
             if let species = poke.pokeSpecies{
-                var enText = String()
-                for flavorText in species.flavor_text_entries{
-                    if flavorText.language.name == "en"{
-                        enText = flavorText.flavor_text
+                var englishText = String()
+                for flavorText in species.flavor_text_entries {
+                    if flavorText.language.name == "en" {
+                        englishText = flavorText.flavor_text
+                        englishText = englishText.replacingOccurrences(of: "^\\n*", with: " ")//replace newlines with space
                     }
                 }
-                print(enText)
-                flavorTextView.text = enText
+                
+                flavorTextView.text = englishText
             }
             
             pokeImage.image = image
-            
         }
         
     }

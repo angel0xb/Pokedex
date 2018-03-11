@@ -13,7 +13,6 @@ final class NetworkManager: NetworkManagerService{
     var pokemons:[Pokemon]? //used to store sorted [Pokemon]
     
     func downloadPokemon(url: String ) {
-
         getRequest(urlString:url , completion: ({(data:Data) in
             
             do{
@@ -100,7 +99,7 @@ final class NetworkManager: NetworkManagerService{
     
 
 
-//    makes network request and parses it 
+//    makes network request and parses it into a PokemonSpecies using JSONDecoder
     func getSpecies(request:String, completion: @escaping (PokemonSpecies) -> Void) {
 
         getRequest(urlString: request, completion: { (data) in

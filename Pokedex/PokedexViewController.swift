@@ -8,15 +8,12 @@
 
 import UIKit
 
-let imageCache = NSCache<AnyObject, AnyObject>()
+let imageCache = NSCache<AnyObject, AnyObject>()//cache used to store images
 
 class PokedexViewController: UIViewController {
 
-    @IBOutlet weak var pokedexCollectionView: UICollectionView!
-    var myPokeArray = [Pokemon]()
-    var offset = 20
-    var myNetworkManager: NetworkManager?
-    var pokey: Pokemon?
+    @IBOutlet weak var pokedexCollectionView: UICollectionView!//view used to display Pokemon
+    var myNetworkManager: NetworkManager?//Network Manager used to make requests
     
     @IBAction func nextPage(_ sender: Any) {
         
@@ -25,30 +22,15 @@ class PokedexViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let nib = UINib(nibName: PokeCollectionViewCell.nibName, bundle: nil)
+        let nib = UINib(nibName: PokeCollectionViewCell.nibName, bundle: nil) //register nib
         pokedexCollectionView.register(nib, forCellWithReuseIdentifier: PokeCollectionViewCell.nibName)
         
-        myNetworkManager = NetworkManager()
-        myNetworkManager?.delegate = self
-        myNetworkManager?.downloadPokemon(url:"https://pokeapi.co/api/v2/pokemon/")
-        
-//        DispatchQueue.main.async {
-//            self.myNetworkManager?.getPokemon(url: "https://pokeapi.co/api/v2/pokemon/1/", completion: { (poke) in
-//                self.myPokeArray.append(poke)
-//                self.pokey = poke
-//                print(self.pokey)
-//            })
-//
-//        }
-
+        myNetworkManager = NetworkManager()//initialize NetowrkManager
+        myNetworkManager?.delegate = self//set Deleagte
+        myNetworkManager?.downloadPokemon(url:"https://pokeapi.co/api/v2/pokemon/")//make Request using URL
         
         
-        
-        if let pokes = myNetworkManager?.pokemons{
-            myPokeArray = pokes
-            print("\n\n\n \(myPokeArray)")
-        }
-        pokedexCollectionView.reloadData()
+//        pokedexCollectionView.reloadData()
         
     }
 
@@ -60,17 +42,15 @@ class PokedexViewController: UIViewController {
 
     
     // MARK: - Navigation
-
+/*
+     segue used to display Pokemon information
+ */
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         
-        if let pokeVC = segue.destination as? PokeViewController, let indexPath = pokedexCollectionView.indexPathsForSelectedItems?.first {
+        if let pokeVC = segue.destination as? PokeViewController, let indexPath = pokedexCollectionView.indexPathsForSelectedItems?.first { // safely get PokeViewController set indexpath using selected cell
             
+            //Safely use cell with indexPath to set image and Pokemon object
             if let cell = pokedexCollectionView.cellForItem(at: indexPath) as? PokeCollectionViewCell {
-                
-//                if let image = cell.pokeImage{
-//                    pokeVC.image = image.image
-//                }
-                
                 
                 pokeVC.image = cell.pokeImage.image
                 pokeVC.pokemon = cell.poke
@@ -112,6 +92,7 @@ extension PokedexViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if let cell = pokedexCollectionView.dequeueReusableCell(withReuseIdentifier: PokeCollectionViewCell.nibName, for: indexPath) as? PokeCollectionViewCell, let pokemon = myNetworkManager?.pokemons![indexPath.row] {
+            
             cell.populateCell(pokemon: pokemon)
             
             return cell

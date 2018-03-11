@@ -9,8 +9,13 @@
 import Foundation
 
 class NetworkManagerService {
-
     
+    /*
+     makes use of escaping closure to capture network request using URLSession
+    convert string to URL
+    Create request using URLSession
+    capture data using escaping closure
+    */
     func getRequest(urlString:String,completion: @escaping ((Data) -> Void)) {
         guard let url = URL(string:urlString) else { fatalError("Could not create URL")}
         
