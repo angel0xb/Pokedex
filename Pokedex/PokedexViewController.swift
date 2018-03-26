@@ -13,18 +13,10 @@ let imageCache = NSCache<AnyObject, AnyObject>()//cache used to store images
 class PokedexViewController: UIViewController {
 
     @IBOutlet weak var pokedexCollectionView: UICollectionView!//view used to display Pokemon
-    var myNetworkManager: NetworkManager?//Network Manager used to make requests
+    var myNetworkManager = NetworkManager()//initialize NetowrkManager//Network Manager used to make requests
     var myDataManager = DataPersitanceManager()
+    var myPokemonArray = [Pokemon]()
     
-    @IBAction func nextPage(_ sender: Any) {
-        
-        guard let pokemons = myNetworkManager?.pokemons else {
-            return
-        }
-        for pokemon in pokemons {
-            myDataManager.storePokemon(pokemonInstance: pokemon)
-        }
-    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,9 +24,67 @@ class PokedexViewController: UIViewController {
         let nib = UINib(nibName: PokeCollectionViewCell.nibName, bundle: nil) //register nib
         pokedexCollectionView.register(nib, forCellWithReuseIdentifier: PokeCollectionViewCell.nibName)
         
-        myNetworkManager = NetworkManager()//initialize NetowrkManager
-        myNetworkManager?.delegate = self//set Deleagte
-        myNetworkManager?.downloadPokemon(url:"https://pokeapi.co/api/v2/pokemon/")//make Request using URL
+        
+        myNetworkManager.delegate = self//set Deleagte
+        
+        myNetworkManager.downloadPokemon(url:"https://pokeapi.co/api/v2/pokemon/")//make Request using URL
+        
+        
+//        myNetworkManager.pokemonFromNetwork()
+        
+        
+        
+        myDataManager.retrieveAllPokemon()
+        myDataManager.savedEntitiesToModels()
+        
+        
+//        if let saved = myDataManager.savedPokemonArray { // if we have something stored populated the collectionView with this
+//            
+//            
+//            print("got something saved")
+//            if let pokes = myNetworkManager.pokemons { //store any pokemons that arent already saved
+//                
+//                for poke in pokes {
+//                    
+//                    myDataManager.storePokemon(pokemonInstance: poke)
+//                }
+//                
+//            }
+//            
+//            myPokemonArray = saved
+//            print(myPokemonArray)
+//            
+//            pokedexCollectionView.reloadData()
+//            
+//        } else { // there is nothing saved yet
+//            
+//            print("nothing saved")
+//            if let pokemons  = myNetworkManager.pokemons {
+//                
+//                print(pokemons)
+//                myPokemonArray = pokemons //display pokemon retrieved from NetworkManager
+//                
+//                for poke in pokemons {
+//                    
+//                    myDataManager.storePokemon(pokemonInstance: poke) //save all from request
+//                }
+//            }
+//            
+//        }
+        
+        print(myPokemonArray)
+        
+        myPokemonArray.sort(by: {($0.id > $1.id) })
+        pokedexCollectionView.reloadData()
+        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        
+        
+        
+
+        
         
     }
 
@@ -59,19 +109,6 @@ class PokedexViewController: UIViewController {
                 pokeVC.image = cell.pokeImage.image
                 pokeVC.pokemon = cell.poke
                 
-                
-//                if let pokes = myNetworkManager?.pokemons {
-//                    let pokemon = pokes[indexPath.row]
-//                    pokeVC.pokemon = pokemon
-//                    guard let sprite = pokemon.sprites["front_default"] else{return}
-//                    if let sprite = sprite{
-//                        if let image = imageCache.object(forKey: sprite as AnyObject) {
-//                             pokeVC.image = image as? UIImage
-//                        }
-//                    }
-//                }
-                
-                
             }
         }
     }
@@ -88,14 +125,19 @@ extension PokedexViewController: NetworkManagerDelegate{
 extension PokedexViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if let pokes = myNetworkManager?.pokemons{
+        if let pokes = myNetworkManager.pokemons{
             return pokes.count
         }
-        return 0
+//        return 0
+//        print(myPokemonArray.count)
+        return myPokemonArray.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if let cell = pokedexCollectionView.dequeueReusableCell(withReuseIdentifier: PokeCollectionViewCell.nibName, for: indexPath) as? PokeCollectionViewCell, let pokemon = myNetworkManager?.pokemons![indexPath.row] {
+        if let cell = pokedexCollectionView.dequeueReusableCell(withReuseIdentifier: PokeCollectionViewCell.nibName, for: indexPath) as? PokeCollectionViewCell /*, let pokemons = myNetworkManager.pokemons */{
+            
+            let pokemon = myPokemonArray[indexPath.row]
+//            let pokemon = pokemons[indexPath.row]
             
             cell.populateCell(pokemon: pokemon)
             

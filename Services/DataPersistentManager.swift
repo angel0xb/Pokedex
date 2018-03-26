@@ -13,6 +13,8 @@ import UIKit
 class DataPersitanceManager {
     
     var savedPokemon: [PokemonEntity]?
+    var savedPokemonArray: [Pokemon]?
+    var savedPokemonDicationary: [String : Bool]?
     
     private let appDelegate = UIApplication.shared.delegate as! AppDelegate
     //Used to get viewContext
@@ -20,7 +22,10 @@ class DataPersitanceManager {
         return appDelegate.persistentContainer.viewContext
     }
     
-    
+    /*
+     saves pokemon passed as parameter
+     converts Pokmon to match entity
+ */
     func storePokemon(pokemonInstance: Pokemon) {
 
         if findPokemon(id: pokemonInstance.id) == nil {
@@ -66,7 +71,7 @@ class DataPersitanceManager {
         return pokemon
     }
     
-    func retrieveAllPokemon() -> [PokemonEntity] {
+    func retrieveAllPokemon() /*-> [PokemonEntity] */{
         
         var pokemons = [PokemonEntity]()
         let context = getContext()
@@ -86,7 +91,10 @@ class DataPersitanceManager {
             
             print("Error retrieving Pokemon: ", error)
         }
-        return pokemons
+        
+        
+        savedPokemon = pokemons
+        /*return pokemons*/
     }
     
     
@@ -113,7 +121,68 @@ class DataPersitanceManager {
     }
     
 
+    func savedEntitiesToModels() /*-> [Pokemon]? */{
+        
+        var pokemons = [Pokemon]()
+        
+        guard let entities = savedPokemon else { return }
+        
+        for entity in entities {
+            
+            if let poke = convertToPokemonModel(pokeEntity: entity) {
+                
+                pokemons.append(poke)
+            }
+            
+        }
+        
+        
+        if pokemons.count > 0 {
+            
+            savedPokemonArray = pokemons
+        }
+        
+        /*return pokemons*/
+    }
+    
+    /*
+     takes in a Pokemon ID to use for predicate for fetch request
+     looks at each entity from result
+     if value for id key is nil set it to true
+     ids not found in request will remain nil
+     */
+    func  getSavedDictionary(id: Int) /* -> [String : Bool]*/ {
+        
+        let context = getContext()
+        let fecthRequest: NSFetchRequest<PokemonEntity> = PokemonEntity.fetchRequest()
+        var pokemonDicationary = [String : Bool]() // Dicationary of pokemon ids match with a bool whether or not they have been saved already
+        fecthRequest.predicate = NSPredicate(format: "id == %@", String(id))
+        
+        
+        do {
+            let searchResults = try context.fetch(fecthRequest)
+            
+            for entity in searchResults {
+                if let id = entity.id{
+                    
+                    if pokemonDicationary[id] == nil {
+                        
+                        pokemonDicationary[id] = true
+                        
+                    }
+                }
 
+            }
+        } catch let error {
+            print("Error: ", error)
+        }
+        
+        savedPokemonDicationary = pokemonDicationary
+        /*return pokemonDicationary */
+        
+    }
+    
+    
     func convertToEntity(pokemonInstance: Pokemon) -> NSManagedObjectContext  {
         let context = getContext()
         let entity = PokemonEntity(context: context)

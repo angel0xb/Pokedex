@@ -11,7 +11,87 @@ import Foundation
 final class NetworkManager: NetworkManagerService{
     weak var delegate:NetworkManagerDelegate?
     var pokemons:[Pokemon]? //used to store sorted [Pokemon]
+    var count: Int?
     
+    
+    func pokemonFromNetwork() {
+        
+        let group = DispatchGroup()
+        
+        group.enter()
+        print("getting them pokes")
+        downloadPokemon(url: "https://pokeapi.co/api/v2/pokemon/") { (pokemon) in
+            
+//            print("downloading...")
+            self.pokemons = pokemon
+            
+            group.leave()
+        }
+        
+        group.notify(queue: DispatchQueue.main) {
+            print("Finished downloading")
+        }
+//        group.wait()
+        
+    }
+    
+    func downloadPokemon(url: String, completion: @escaping (([Pokemon]) -> Void) ) {
+        
+        let group = DispatchGroup()
+        var sortedPokemon = [Pokemon]()
+        
+        getRequest(urlString:url , completion: ({(data:Data) in
+            
+            do{
+                
+                let search = try JSONDecoder().decode(Search.self, from: data)
+                
+                self.count = search.count
+                
+                let results = search.results
+                
+                var pokeURLs = [String]()
+                
+                for pokeInfo in results {
+                    let pokeURL = pokeInfo.url
+                    pokeURLs.append(pokeURL)
+                }
+                
+                
+                
+//                DispatchQueue.main.async {
+                    group.enter()
+                    self.getPokemons(urls: pokeURLs, completion: { (pokeResults) in
+                        print("retrieving pokemon")
+                        let pokeResultsSorted = pokeResults.sorted(by: {($0.id < ($1.id))})
+                        
+                        self.pokemons = pokeResultsSorted
+                        
+                        sortedPokemon = pokeResultsSorted
+                        
+                        group.leave()
+                    
+                        
+                    })
+                    
+                    group.notify(queue: .main, execute: {
+                        
+                        print("sorted")
+                        completion(sortedPokemon)
+                        
+                    })
+
+//                }
+                
+                
+            } catch let jsonErr {
+                print("Error serializing json:", jsonErr)
+            }
+            
+        }))
+        
+        
+    }
     /*
      Makes request with a search result array of muiltiple Pokemon urls
      Append each URL into an array
@@ -21,10 +101,15 @@ final class NetworkManager: NetworkManagerService{
      call delegate to reload collectionview
      */
     func downloadPokemon(url: String ) {
+        let group = DispatchGroup()
         getRequest(urlString:url , completion: ({(data:Data) in
             
             do{
+                
                 let search = try JSONDecoder().decode(Search.self, from: data)
+                
+                self.count = search.count
+                
                 let results = search.results
                 
                 var pokeURLs = [String]()
@@ -36,23 +121,31 @@ final class NetworkManager: NetworkManagerService{
                 
                 
                 DispatchQueue.main.async {
-                    
+                    group.enter()
                     self.getPokemons(urls: pokeURLs, completion: ({ (pokeResults) in
-//                        print("retrieving pokemon")
+                        print("retrieving pokemon")
                         let pokeResultsSorted = pokeResults.sorted(by: {($0.id < ($1.id))})
 
                         self.pokemons = pokeResultsSorted
-
+                        group.leave()
 //                        self.delegate?.didDownloadRequest()
+                        
                     }))
-          
+                    
+                    group.wait()
                 }
+            
+
                 
             } catch let jsonErr {
                 print("Error serializing json:", jsonErr)
             }
             
+            
+
         }))
+        
+        
     }
     
     
@@ -66,9 +159,13 @@ final class NetworkManager: NetworkManagerService{
     func getPokemons(urls: [String], completion: @escaping (([Pokemon]) -> Void)) {
         let group = DispatchGroup()
         var pokes = [Pokemon]()
+        
         for url in urls {
+            
             group.enter()
+            
             getPokemon(url: url, completion: { (pokemon) in
+                
                 pokes.append(pokemon)
                 group.leave()
             })
@@ -76,6 +173,7 @@ final class NetworkManager: NetworkManagerService{
         }
         group.notify(queue: .main) {
             
+            print("got em all")
             completion(pokes)
         }
         
@@ -97,9 +195,11 @@ final class NetworkManager: NetworkManagerService{
             do {
                 
                 var pokemon = try JSONDecoder().decode(Pokemon.self, from: data)
+                
                 group.enter()
+                
                 self.getSpecies(request: pokemon.species.url, completion: { (pSpecies) in
-//                    print("setting species")
+                    print("setting species")
                     pokemon.pokeSpecies = pSpecies
                     group.leave()
                     
@@ -109,6 +209,7 @@ final class NetworkManager: NetworkManagerService{
                     
                     completion(pokemon)
                     self.delegate?.didDownloadRequest()
+                    
                     })
     
             } catch let jsonError {
@@ -127,11 +228,15 @@ final class NetworkManager: NetworkManagerService{
     func getSpecies(request:String, completion: @escaping (PokemonSpecies) -> Void) {
 
         getRequest(urlString: request, completion: { (data) in
+            
             do {
+                
                 let specie = try JSONDecoder().decode(PokemonSpecies.self, from: data)
+                
                 completion(specie)
                 
             } catch let jsonErr {
+                
                 print("Error serializing json:", jsonErr)
             }
             

@@ -59,8 +59,8 @@
                                 </connections>
                             </collectionView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MAa-Bb-axo">
-                                <rect key="frame" x="104" y="522" width="57" height="30"/>
-                                <state key="normal" title="Load More"/>
+                                <rect key="frame" x="104" y="522" width="81" height="30"/>
+                                <state key="normal" title="DownLoad"/>
                                 <connections>
                                     <action selector="nextPage:" destination="NPB-f3-08t" eventType="touchUpInside" id="jhE-h5-kIy"/>
                                 </connections>
@@ -70,7 +70,7 @@
                         <constraints>
                             <constraint firstItem="eEL-La-Opz" firstAttribute="bottom" secondItem="5Cm-46-MtQ" secondAttribute="bottom" constant="54" id="3lE-yi-bkO"/>
                             <constraint firstItem="MAa-Bb-axo" firstAttribute="top" secondItem="5Cm-46-MtQ" secondAttribute="bottom" constant="8" id="5km-pK-51r"/>
-                            <constraint firstItem="eEL-La-Opz" firstAttribute="trailing" secondItem="MAa-Bb-axo" secondAttribute="trailing" constant="159" id="PJC-Pn-KTh"/>
+                            <constraint firstItem="eEL-La-Opz" firstAttribute="trailing" secondItem="MAa-Bb-axo" secondAttribute="trailing" constant="135" id="PJC-Pn-KTh"/>
                             <constraint firstItem="5Cm-46-MtQ" firstAttribute="leading" secondItem="eEL-La-Opz" secondAttribute="leading" constant="16" id="Xo7-L5-pbV"/>
                             <constraint firstItem="eEL-La-Opz" firstAttribute="bottom" secondItem="MAa-Bb-axo" secondAttribute="bottom" constant="16" id="cBY-mb-ojB"/>
                             <constraint firstItem="5Cm-46-MtQ" firstAttribute="top" secondItem="eEL-La-Opz" secondAttribute="top" constant="31" id="tDb-gG-cHK"/>

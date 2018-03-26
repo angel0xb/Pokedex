@@ -53,7 +53,8 @@ class PokeCollectionViewCell: UICollectionViewCell {
         }
     }
     
-
-    
+    func populateCell(pokemon:PokemonEntity) {
+        
+    }
 //    func populateCellWithEntity(poke)
 }
